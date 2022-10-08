@@ -1,0 +1,127 @@
+LIFEDATA<-read.csv("C:/Users/patrick/Desktop/Life Expectancy Data.csv")
+LIFEDATA
+str(LIFEDATA)
+LIFEDATA1<-LIFEDATA$Country
+LIFEDATA1
+library(dplyr)
+lifa<-LIFEDATA %>% 
+      filter(Country %in% c("Kenya","Uganda","United Republic of Tanzania",
+                            "Rwanda","Burundi","Sudan","South Sudan","Somalia"
+                            ,"Ethiopia","Djibouti","Eritrea","Madagascar"))
+lifa
+str(lifa)
+Life.expectancy<-lifa$Life.expectancy
+Adult.Mortality<-lifa$Adult.Mortality
+Alcohol<-lifa$Alcohol
+Hepatitis.B<-lifa$Hepatitis.B
+Polio<-lifa$Polio
+Diphtheria<-lifa$Diphtheria
+HIV.AIDS<-lifa$HIV.AIDS
+
+lifa1<-data.frame(Life.expectancy,Adult.Mortality,Alcohol,Hepatitis.B,
+           Polio,Diphtheria,HIV.AIDS)
+lifa1
+misval<-sapply(lifa1,function(x) sum(length(which (is.na(x)))))
+misval
+require(kableExtra)
+table(misval)
+kable(as.data.frame(misval)) %>%
+     kable_styling(bootstrap_options=c("stripped","hover","condensed","responsive" ))
+
+
+boxplot(Adult.Mortality)
+boxplot(Hepatitis.B)
+par(mfrow=c(2,2))
+boxplot(Alcohol,main="BoxPlot of Alcohol")
+boxplot(Hepatitis.B,main="BoxPlot of Hepatitis.B")
+boxplot(Polio,main="BoxPlot of Polio")
+boxplot(Diphtheria,main="BoxPlot of Diptheria")
+par(mfrow=c(2,2))
+mean(Polio,na.rm = T)
+
+median(Polio,na.rm = T)
+Polio[is.na(Polio)]<-median(Polio,na.rm = T)
+Polio
+median(Alcohol,na.rm = T)
+Alcohol[is.na(Alcohol)]<-median(Alcohol,na.rm = T)
+Alcohol
+Hepatitis.B
+median(Hepatitis.B,na.rm = T)
+Hepatitis.B[is.na(Hepatitis.B)]<-median(Hepatitis.B,na.rm = T)
+Hepatitis.B
+Diphtheria
+mean(Diphtheria,na.rm = T)
+Diphtheria[is.na(Diphtheria)]<-mean(Diphtheria,na.rm = T)
+Diphtheria
+view(lifa1)
+lifa1
+lifa1<-data.frame(Life.expectancy,Adult.Mortality,Alcohol,Hepatitis.B,
+                  Polio,Diphtheria,HIV.AIDS)
+lifa1
+lifa1model<-lm(Life.expectancy~1)
+lifa1model
+lifa1model<-lm(Life.expectancy~Adult.Mortality+Alcohol+Hepatitis.B+Polio
+               +Diphtheria+HIV.AIDS,data=lifa1)
+lifa1model
+summary(lifa1model)
+require(olsrr)
+forwardfit.aic<-ols_step_forward_aic(lifa1model,details = TRUE)
+forwardfit.aic
+backwardfit.aic<-ols_step_backward_aic(lifa1model,details = TRUE)
+backwardfit.aic
+stepregress.aic<-ols_step_both_aic(lifa1model,details = TRUE)
+stepregress.aic
+
+forwardfit.aic<-lm(Life.expectancy~Adult.Mortality+Alcohol+Hepatitis.B
+                  +Diphtheria+HIV.AIDS,data=lifa1)
+backwardfit.aic<-lm(Life.expectancy~Adult.Mortality+Alcohol+Hepatitis.B
+                    +Diphtheria+HIV.AIDS,data=lifa1)
+stepregress.aic<-lm(Life.expectancy~Adult.Mortality+Alcohol+Hepatitis.B
+
+                    
+                                      +Diphtheria+HIV.AIDS,data=lifa1)
+
+summary(forwardfit.aic)
+summary.aov(forwardfit.aic)
+#NORMALITY CHECK
+
+par(mfrow=c(2,2))
+plot(lifa1model,2,main = "Full Model")
+plot(forwardfit.aic,2,main="Forward model")
+plot(backwardfit.aic,2,main="Backward model")
+plot(stepregress.aic,2,main="Mixed Model")
+
+par(mfrow=c(2,2))
+plot(density(lifa1model$residuals),main="Full Model")
+plot(density(forwardfit.aic$residuals),main="Forward Model")
+plot(density(backwardfit.aic$residuals),main="Backward Model")
+plot(density(stepregress.aic$residuals),main="Mixed Model")
+
+#TEST OF LINEARITY
+par(mfrow=c(2,2))
+plot(lifa1model,1,caption = "Full Model: Residuals vs Fitted")
+plot(forwardfit.aic,1,caption = "Forward Model:Residuals vs Fitted  ")
+plot(backwardfit.aic,1,caption = "Backward Model:Residuals vs Fitted")
+plot(stepregress.aic,1,caption = "Mixed Model:Residuals vs Fitted")
+
+#TEST FOR HOMOSCEDASTICITY
+par(mfrow=c(2,2))
+plot(lifa1model,3,main = "Full Model")
+plot(forwardfit.aic,3,main="Forward model")
+plot(backwardfit.aic,3,main="Backward model")
+plot(stepregress.aic,3,main="Mixed Model")
+
+
+library("car")
+varIFFullmodel<-data.frame("VIF Value"=vif(lifa1model))
+varIFFullmodel
+varIFforward<-data.frame("VIF Value"=vif(forwardfit.aic))
+varIFforward
+
+ARsqdFullmodel<-summary(lifa1model)$adj.r.squared
+ARsqdFullmodel
+
+library(MLmetrics)
+
+RMSEFullModel<-RMSE(y_pred=predict(lifa1model),y_true=lifa1$Life.expectancy)
+RMSEFullModel
